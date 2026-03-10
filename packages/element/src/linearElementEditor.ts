@@ -314,7 +314,7 @@ export class LinearElementEditor {
     // Determine if point movement should happen and how much
     let deltaX = 0;
     let deltaY = 0;
-    if (shouldRotateWithDiscreteAngle(event)) {
+    if (shouldRotateWithDiscreteAngle(event) || app.state.orthoModeEnabled) {
       const [width, height] = LinearElementEditor._getShiftLockedDelta(
         element,
         elementsMap,
@@ -354,7 +354,7 @@ export class LinearElementEditor {
       element,
       elements,
       app,
-      shouldRotateWithDiscreteAngle(event),
+      shouldRotateWithDiscreteAngle(event) || app.state.orthoModeEnabled,
       event.altKey,
       linearElementEditor,
     );
@@ -504,7 +504,10 @@ export class LinearElementEditor {
     // Determine if point movement should happen and how much
     let deltaX = 0;
     let deltaY = 0;
-    if (shouldRotateWithDiscreteAngle(event) && singlePointDragged) {
+    if (
+      (shouldRotateWithDiscreteAngle(event) || app.state.orthoModeEnabled) &&
+      singlePointDragged
+    ) {
       const [width, height] = LinearElementEditor._getShiftLockedDelta(
         element,
         elementsMap,
@@ -543,7 +546,8 @@ export class LinearElementEditor {
       element,
       elements,
       app,
-      shouldRotateWithDiscreteAngle(event) && singlePointDragged,
+      (shouldRotateWithDiscreteAngle(event) || app.state.orthoModeEnabled) &&
+        singlePointDragged,
       event.altKey,
       linearElementEditor,
     );
@@ -589,6 +593,39 @@ export class LinearElementEditor {
 
     // Attached text might need to update if arrow dimensions change
     const boundTextElement = getBoundTextElement(element, elementsMap);
+
+    if (element.customData?.isDimension && boundTextElement) {
+      const distance = pointDistance(element.points[0], element.points[element.points.length - 1]);
+      // Assuming 100px = 1m for CAD scaling (1:100)
+      const text = (distance / 100).toFixed(2) + "m";
+      if (boundTextElement.text !== text) {
+        app.scene.mutateElement(boundTextElement, { text, originalText: text });
+      }
+    }
+
+    if (element.customData?.isAngle && boundTextElement) {
+      if (element.points.length === 3) {
+         const p0 = element.points[0];
+         const p2 = element.points[2];
+         const p1x = p2[0];
+         const p1y = p0[1];
+         if (element.points[1][0] !== p1x || element.points[1][1] !== p1y) {
+           const newPoints = [...element.points] as any;
+           newPoints[1] = pointFrom(p1x, p1y);
+           app.scene.mutateElement(element, { points: newPoints });
+         }
+      }
+
+      const p1 = element.points[0];
+      const p2 = element.points[element.points.length - 1];
+      let angle = (Math.atan2(p2[1] - p1[1], p2[0] - p1[0]) * 180) / Math.PI;
+      if (angle < 0) angle += 360;
+      const text = Math.round(angle).toString() + "°";
+      if (boundTextElement.text !== text) {
+        app.scene.mutateElement(boundTextElement, { text, originalText: text });
+      }
+    }
+
     if (boundTextElement) {
       handleBindTextResize(element, app.scene, false);
     }

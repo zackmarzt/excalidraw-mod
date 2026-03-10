@@ -540,6 +540,76 @@ export const actionChangeFillStyle = register<ExcalidrawElement["fillStyle"]>({
   },
 });
 
+export const actionChangeWallMaterial = register<string>({
+  name: "changeWallMaterial",
+  label: "labels.wallMaterial",
+  trackEvent: false,
+  predicate: (elements, appState) => {
+    return (
+      appState.activeTool.type === "wall" ||
+      elements.some((el) => !!el.customData?.isWall)
+    );
+  },
+  perform: (elements, appState, value) => {
+    if (!value) {
+      return false;
+    }
+    return {
+      elements: changeProperty(elements, appState, (el) =>
+        newElementWith(el, {
+          customData: {
+            ...(el.customData || {}),
+            wallMaterial: value,
+          },
+        }),
+      ),
+      appState: { ...appState, currentItemWallMaterial: value as "concreto" | "drywall" | "vidro" },
+      captureUpdate: CaptureUpdateAction.IMMEDIATELY,
+    };
+  },
+  PanelComponent: ({ elements, appState, updateData, app }) => {
+    const currentMaterial = getFormValue(
+      elements,
+      app,
+      (element) => (element.customData?.wallMaterial as string) || "concreto",
+      (element) => !!element.customData?.isWall,
+      () => appState.currentItemWallMaterial || "concreto",
+    );
+    return (
+      <fieldset>
+        <legend>Material da Parede</legend>
+        <div className="buttonList">
+          <RadioSelection
+            group="wall-material"
+            options={[
+              {
+                value: "concreto",
+                text: "Concreto",
+                icon: FillSolidIcon,
+                testId: "wallMaterial-concreto",
+              },
+              {
+                value: "drywall",
+                text: "Drywall",
+                icon: StrokeWidthBaseIcon,
+                testId: "wallMaterial-drywall",
+              },
+              {
+                value: "vidro",
+                text: "Vidro",
+                icon: StrokeStyleDashedIcon,
+                testId: "wallMaterial-vidro",
+              },
+            ]}
+            value={currentMaterial}
+            onChange={(value) => updateData(value)}
+          />
+        </div>
+      </fieldset>
+    );
+  },
+});
+
 export const actionChangeStrokeWidth = register<
   ExcalidrawElement["strokeWidth"]
 >({

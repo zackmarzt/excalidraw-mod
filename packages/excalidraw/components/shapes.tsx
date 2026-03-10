@@ -13,6 +13,10 @@ import {
   EraserIcon,
   laserPointerToolIcon,
   handIcon,
+  WallIcon,
+  DimensionIcon,
+  AngleIcon,
+  DoorIcon,
 } from "./icons";
 
 import type { AppClassProperties } from "../types";
@@ -113,6 +117,38 @@ export const SHAPES = [
     numericKey: null,
     fillable: false,
     toolbar: false,
+  },
+  {
+    icon: WallIcon,
+    value: "wall",
+    key: "w",
+    numericKey: null,
+    fillable: true,
+    toolbar: true,
+  },
+  {
+    icon: DimensionIcon,
+    value: "dimension",
+    key: "q",
+    numericKey: null,
+    fillable: true,
+    toolbar: true,
+  },
+  {
+    icon: AngleIcon,
+    value: "angle",
+    key: "e",
+    numericKey: null,
+    fillable: false,
+    toolbar: true,
+  },
+  {
+    icon: DoorIcon,
+    value: "door",
+    key: "p",
+    numericKey: null,
+    fillable: true,
+    toolbar: true,
   },
 ] as const;
 

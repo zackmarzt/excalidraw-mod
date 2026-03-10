@@ -309,6 +309,7 @@ import {
   actionSendBackward,
   actionSendToBack,
   actionToggleGridMode,
+  actionToggleOrthoMode,
   actionToggleStats,
   actionToggleZenMode,
   actionUnbindText,
@@ -7517,11 +7518,22 @@ class App extends React.Component<AppProps, AppState> {
       this.handleTextOnPointerDown(event, pointerDownState);
     } else if (
       this.state.activeTool.type === "arrow" ||
-      this.state.activeTool.type === "line"
+      this.state.activeTool.type === "line" ||
+      this.state.activeTool.type === "wall" ||
+      this.state.activeTool.type === "door" ||
+      this.state.activeTool.type === "dimension" ||
+      this.state.activeTool.type === "angle"
     ) {
+      const mappedType =
+        this.state.activeTool.type === "wall" || this.state.activeTool.type === "door" || this.state.activeTool.type === "angle"
+          ? "line"
+          : this.state.activeTool.type === "dimension"
+          ? "arrow"
+          : this.state.activeTool.type;
+
       this.handleLinearElementOnPointerDown(
         event,
-        this.state.activeTool.type,
+        mappedType,
         pointerDownState,
       );
     } else if (this.state.activeTool.type === "freedraw") {
@@ -8767,11 +8779,32 @@ class App extends React.Component<AppProps, AppState> {
 
       setCursor(this.interactiveCanvas, CURSOR_TYPE.POINTER);
     } else {
-      const [gridX, gridY] = getGridPoint(
+      let [gridX, gridY] = getGridPoint(
         pointerDownState.origin.x,
         pointerDownState.origin.y,
         event[KEYS.CTRL_OR_CMD] ? null : this.getEffectiveGridSize(),
       );
+
+      if (this.state.activeTool.type === "wall" || this.state.activeTool.type === "door") {
+        let minDistance = 20 / this.state.zoom.value;
+        const nonDeletedElements = this.scene.getNonDeletedElements();
+        for (const el of nonDeletedElements) {
+          if (el.customData?.isWall && el.type === "line") {
+            const rx = el.x;
+            const ry = el.y;
+            for (const pt of (el as any).points) {
+              const globalX = rx + pt[0];
+              const globalY = ry + pt[1];
+              const dist = Math.hypot(gridX - globalX, gridY - globalY);
+              if (dist < minDistance) {
+                 minDistance = dist;
+                 gridX = globalX;
+                 gridY = globalY;
+              }
+            }
+          }
+        }
+      }
 
       const topLayerFrame = this.getTopLayerFrameAtSceneCoords({
         x: gridX,
@@ -8789,6 +8822,13 @@ class App extends React.Component<AppProps, AppState> {
           ? [currentItemStartArrowhead, currentItemEndArrowhead]
           : [null, null];
 
+      const strokeWidth =
+        this.state.activeTool.type === "wall"
+          ? (this.state.currentItemWallMaterial === "vidro" ? 2 : (this.state.currentItemWallMaterial === "drywall" ? 4 : 8))
+          : this.state.activeTool.type === "door"
+          ? 2
+          : this.state.currentItemStrokeWidth;
+
       const element =
         elementType === "arrow"
           ? newArrowElement({
@@ -8798,7 +8838,7 @@ class App extends React.Component<AppProps, AppState> {
               strokeColor: this.state.currentItemStrokeColor,
               backgroundColor: this.state.currentItemBackgroundColor,
               fillStyle: this.state.currentItemFillStyle,
-              strokeWidth: this.state.currentItemStrokeWidth,
+              strokeWidth: strokeWidth,
               strokeStyle: this.state.currentItemStrokeStyle,
               roughness: this.state.currentItemRoughness,
               opacity: this.state.currentItemOpacity,
@@ -8817,6 +8857,10 @@ class App extends React.Component<AppProps, AppState> {
                 this.state.currentItemArrowType === ARROW_TYPE.elbow
                   ? []
                   : null,
+              customData:
+                this.state.activeTool.type === "dimension"
+                  ? { isDimension: true }
+                  : undefined,
             })
           : newLinearElement({
               type: elementType,
@@ -8825,7 +8869,7 @@ class App extends React.Component<AppProps, AppState> {
               strokeColor: this.state.currentItemStrokeColor,
               backgroundColor: this.state.currentItemBackgroundColor,
               fillStyle: this.state.currentItemFillStyle,
-              strokeWidth: this.state.currentItemStrokeWidth,
+              strokeWidth: strokeWidth,
               strokeStyle: this.state.currentItemStrokeStyle,
               roughness: this.state.currentItemRoughness,
               opacity: this.state.currentItemOpacity,
@@ -8835,6 +8879,15 @@ class App extends React.Component<AppProps, AppState> {
                   : null,
               locked: false,
               frameId: topLayerFrame ? topLayerFrame.id : null,
+              customData:
+                this.state.activeTool.type === "wall"
+                  ? { isWall: true, wallMaterial: this.state.currentItemWallMaterial || "concreto" }
+                  : this.state.activeTool.type === "door"
+                  ? { isDoor: true }
+                  : this.state.activeTool.type === "angle"
+                  ? { isAngle: true }
+                  : undefined,
+              polygon: this.state.activeTool.type === "angle",
             });
 
       const point = pointFrom<GlobalPoint>(
@@ -8851,10 +8904,36 @@ class App extends React.Component<AppProps, AppState> {
         : null;
 
       this.scene.mutateElement(element, {
-        points: [pointFrom<LocalPoint>(0, 0), pointFrom<LocalPoint>(0, 0)],
+        points: this.state.activeTool.type === "angle"
+          ? [pointFrom<LocalPoint>(0, 0), pointFrom<LocalPoint>(0, 0), pointFrom<LocalPoint>(0, 0)]
+          : [pointFrom<LocalPoint>(0, 0), pointFrom<LocalPoint>(0, 0)],
       });
 
       this.scene.insertElement(element);
+
+      if (this.state.activeTool.type === "dimension" || this.state.activeTool.type === "angle") {
+        const textElement = newTextElement({
+          text: this.state.activeTool.type === "angle" ? "0°" : "0m",
+          fontSize: 16,
+          fontFamily: 1,
+          textAlign: "center",
+          verticalAlign: "middle",
+          x: gridX,
+          y: gridY,
+          strokeColor: element.strokeColor,
+          backgroundColor: "transparent",
+        });
+
+        this.scene.mutateElement(element, {
+          boundElements: (element.boundElements || []).concat({ type: "text", id: textElement.id })
+        });
+        
+        this.scene.mutateElement(textElement, {
+          containerId: element.id
+        });
+
+        this.scene.insertElement(textElement);
+      }
 
       if (isBindingElement(element)) {
         // Do the initial binding so the binding strategy has the initial state
@@ -9474,8 +9553,8 @@ class App extends React.Component<AppProps, AppState> {
             ...pointerDownState.originalElements.values(),
           ];
 
-          // We only drag in one direction if shift is pressed
-          const lockDirection = event.shiftKey;
+          // We only drag in one direction if shift is pressed or ortho mode enabled
+          const lockDirection = event.shiftKey || this.state.orthoModeEnabled;
 
           if (lockDirection) {
             const distanceX = Math.abs(dragOffset.x);
@@ -12106,6 +12185,7 @@ class App extends React.Component<AppProps, AppState> {
         return [
           ...options,
           actionToggleGridMode,
+          actionToggleOrthoMode,
           actionToggleZenMode,
           actionToggleViewMode,
           actionToggleStats,
@@ -12123,6 +12203,7 @@ class App extends React.Component<AppProps, AppState> {
         actionUnlockAllElements,
         CONTEXT_MENU_SEPARATOR,
         actionToggleGridMode,
+        actionToggleOrthoMode,
         actionToggleObjectsSnapMode,
         actionToggleArrowBinding,
         actionToggleMidpointSnapping,

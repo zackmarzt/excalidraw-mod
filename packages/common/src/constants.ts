@@ -461,6 +461,10 @@ export const TOOL_TYPE = {
   magicframe: "magicframe",
   embeddable: "embeddable",
   laser: "laser",
+  wall: "wall",
+  dimension: "dimension",
+  angle: "angle",
+  door: "door",
 } as const;
 
 export const EDITOR_LS_KEYS = {

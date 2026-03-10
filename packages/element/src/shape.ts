@@ -790,6 +790,41 @@ const _generateElementShape = (
           shape = [
             generator.linearPath(points as unknown as RoughPoint[], options),
           ];
+          
+          if (element.customData?.isWall && element.customData?.wallMaterial === "drywall") {
+            shape.push(
+              generator.linearPath(points as unknown as RoughPoint[], {
+                ...options,
+                strokeWidth: Math.max(1, (options.strokeWidth || 4) - 2),
+                stroke: isDarkMode ? "#121212" : (canvasBackgroundColor || "#ffffff") // Approximate dark mode bg, or transparent fill
+              })
+            );
+          } else if (element.customData?.isDoor && points.length >= 2) {
+            const p1 = points[0];
+            const p2 = points[points.length - 1]; // ending point
+            const dx = p2[0] - p1[0];
+            const dy = p2[1] - p1[1];
+            const radius = Math.hypot(dx, dy);
+            if (radius > 1) {
+               const startAngle = Math.atan2(dy, dx);
+               const endAngle = startAngle + Math.PI / 2;
+               shape.push(
+                 generator.arc(
+                   p1[0], p1[1], 
+                   radius * 2, radius * 2, // width and height for roughjs arc
+                   startAngle, endAngle, 
+                   false, 
+                   { ...options, strokeLineDash: [2, 4], strokeWidth: 1 }
+                 )
+               );
+               shape.push(
+                 generator.linearPath(
+                   [p1, [p1[0] + Math.cos(endAngle) * radius, p1[1] + Math.sin(endAngle) * radius]] as unknown as RoughPoint[],
+                   options
+                 )
+               );
+            }
+          }
         }
       } else {
         shape = [generator.curve(points as unknown as RoughPoint[], options)];

@@ -2433,3 +2433,46 @@ export const settingsIcon = createIcon(
   </g>,
   tablerIconProps,
 );
+export const WallIcon = createIcon(
+  <g strokeWidth="1.5">
+    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+    <path d="M4 4h16v16h-16z" />
+    <path d="M4 8h16" />
+    <path d="M4 16h16" />
+    <path d="M9 4v4" />
+    <path d="M14 8v8" />
+    <path d="M9 16v4" />
+  </g>,
+  tablerIconProps,
+);
+
+export const DimensionIcon = createIcon(
+  <g strokeWidth="1.5">
+    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+    <path d="M4 2v20" />
+    <path d="M20 2v20" />
+    <path d="M4 12h16" />
+    <path d="M6 10l-2 2l2 2" />
+    <path d="M18 10l2 2l-2 2" />
+  </g>,
+  tablerIconProps,
+);
+
+export const AngleIcon = createIcon(
+  <g strokeWidth="1.5">
+    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+    <path d="M4 20h16M4 20l12 -12" />
+    <path d="M10 20a4 4 0 0 1 -1.5 -3.5" />
+  </g>,
+  tablerIconProps,
+);
+
+export const DoorIcon = createIcon(
+  <g strokeWidth="1.5">
+    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+    <path d="M14 12v.01" />
+    <path d="M3 21h18" />
+    <path d="M6 21v-16a2 2 0 0 1 2 -2h8a2 2 0 0 1 2 2v16" />
+  </g>,
+  tablerIconProps,
+);

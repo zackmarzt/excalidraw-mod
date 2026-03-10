@@ -197,6 +197,10 @@ export const SelectedShapeActions = ({
       )}
       {showFillIcons && renderAction("changeFillStyle")}
 
+      {(appState.activeTool.type === "wall" ||
+        targetElements.some((element) => element.customData?.isWall)) &&
+        renderAction("changeWallMaterial")}
+
       {(hasStrokeWidth(appState.activeTool.type) ||
         targetElements.some((element) => hasStrokeWidth(element.type))) &&
         renderAction("changeStrokeWidth")}
@@ -389,6 +393,11 @@ const CombinedShapeProperties = ({
           >
             <div className="selected-shape-actions">
               {showFillIcons && renderAction("changeFillStyle")}
+              {(appState.activeTool.type === "wall" ||
+                targetElements.some((element) =>
+                  element.customData?.isWall,
+                )) &&
+                renderAction("changeWallMaterial")}
               {(hasStrokeWidth(appState.activeTool.type) ||
                 targetElements.some((element) =>
                   hasStrokeWidth(element.type),

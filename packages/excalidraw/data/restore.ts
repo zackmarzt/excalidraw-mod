@@ -116,6 +116,10 @@ export const AllowedExcalidrawActiveTools: Record<
   hand: true,
   laser: false,
   magicframe: false,
+  wall: true,
+  dimension: true,
+  angle: true,
+  door: true,
 };
 
 export type RestoredDataState = {

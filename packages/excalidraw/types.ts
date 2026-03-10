@@ -156,7 +156,11 @@ export type ToolType =
   | "frame"
   | "magicframe"
   | "embeddable"
-  | "laser";
+  | "laser"
+  | "wall"
+  | "dimension"
+  | "angle"
+  | "door";
 
 export type ElementOrToolType = ExcalidrawElementType | ToolType | "custom";
 
@@ -364,6 +368,7 @@ export interface AppState {
   currentHoveredFontFamily: FontFamilyValues | null;
   currentItemRoundness: StrokeRoundness;
   currentItemArrowType: "sharp" | "round" | "elbow";
+  currentItemWallMaterial: "concreto" | "drywall" | "vidro";
   viewBackgroundColor: string;
   scrollX: number;
   scrollY: number;
@@ -416,6 +421,7 @@ export interface AppState {
   gridStep: number;
   gridModeEnabled: boolean;
   viewModeEnabled: boolean;
+  orthoModeEnabled: boolean;
 
   /** top-most selected groups (i.e. does not include nested groups) */
   selectedGroupIds: { [groupId: string]: boolean };
